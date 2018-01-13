@@ -1,113 +1,278 @@
+#!/usr/bin/env/python
 #coding:utf-8
+
+import sys
+import os
+
+def bin2str(source):
+    ret=""
+    for i in range(0,len(source),8):
+        ret+=chr(int(source[i:i+8],2))
+    return ret
+
+def char2bin(source):
+    h=ord(source)
+    ret=""
+    for i in range(7,-1,-1):
+        if h>=pow(2,i):
+            ret+=str(h//pow(2,i))
+            h-=pow(2,i)
+        else:
+            ret+="0"
+    return ret
+
+def str2bin(source):
+    return "".join([char2bin(c) for c in source])
+
+def int2bin(source,bitNum):
+    ret=""
+    for i in range(bitNum-1,-1,-1):
+        if source-pow(2,i)>=0:
+            ret+="1"
+            source-=pow(2,i)
+        else:
+            ret+="0"
+    return ret
 
 def nLeftShift(target,n):
     tmp=target[:n]
     return target[n:]+tmp
-    
-def splitBinary(target):
-    #前後に2分割するやつ
-    1
-    
-def relocate(target,pattern,len):
-    ret_bin=""
-    for i in range(len):
-        ret_bin+=target[pattern[i]-1]
-    return ret_bin
+        
+def relocate(source,table):
+    return "".join([source[table[i]-1] for i in range(len(table))])
 
-def P4(target):
-    pattern=[2,4,3,1]
-    return relocate(target,pattern,4)
+def IP(source):
+    table=[58,50,42,34,26,18,10,2,
+           60,52,44,36,28,20,12,4,
+           62,54,46,38,30,22,14,6,
+           64,56,48,40,32,24,16,8,
+           57,49,41,33,25,17,9,1,
+           59,51,43,35,27,19,11,3,
+           61,53,45,37,29,21,13,5,
+           63,55,47,39,31,23,15,7]
+    return relocate(source,table)
 
-def P8(target):
-    pattern=[6,3,7,4,8,5,10,9]
-    return relocate(target,pattern,8)
-    
-def P10(target):
-    pattern=[3,5,2,7,4,10,1,9,8,6]
-    return relocate(target,pattern,10)
+def FP(source):
+    table=[40,8,48,16,56,24,64,32,
+           39,7,47,15,55,23,63,31,
+           38,6,46,14,54,22,62,30,
+           37,5,45,13,53,21,61,29,
+           36,4,44,12,52,20,60,28,
+           35,3,43,11,51,19,59,27,
+           34,2,42,10,50,18,58,26,
+           33,1,41,9,49,17,57,25]
+    return relocate(source,table)
 
-def EP(target):
-    pattern=[4,1,2,3,2,3,4,1]
-    return relocate(target,pattern,8)
+def E(source):
+    table=[32,1,2,3,4,5,
+           4,5,6,7,8,9,
+           8,9,10,11,12,13,
+           12,13,14,15,16,17,
+           16,17,18,19,20,21,
+           20,21,22,23,24,25,
+           24,25,26,27,28,29,
+           28,29,30,31,32,1]
+    return relocate(source,table)
 
-def IP(target):
-    pattern=[2,6,3,1,4,8,5,7]
-    return relocate(target,pattern,8)
+def P(source):
+    table=[16,7,20,21,
+           29,12,28,17,
+           1,15,23,26,
+           5,18,31,10,
+           2,8,24,14,
+           32,27,3,9,
+           19,13,30,6,
+           22,11,4,25]
+    return relocate(source,table)
 
-def IP-1(target):
-    pattern=[4,1,3,5,7,2,8,6]
-    return relocate(target,pattern,8)
+def SBOX(source):
+    substituted=[]
+    table=[[14,4,13,1,2,15,11,8,3,10,6,12,5,9,0,7,
+            0,15,7,4,14,2,13,1,10,6,12,11,9,5,3,8,
+            4,1,14,8,13,6,2,11,15,12,9,7,3,10,5,0,
+            15,12,8,2,4,9,1,7,5,11,3,14,10,0,6,13],
+           [15,1,8,14,6,11,3,4,9,7,2,13,12,0,5,10,
+            3,13,4,7,15,2,8,14,12,0,1,10,6,9,11,5,
+            0,14,7,11,10,4,13,1,5,8,12,6,9,3,2,15,
+            13,8,10,1,3,15,4,2,11,6,7,12,0,5,14,9],
+           [10,0,9,14,6,3,15,5,1,13,12,7,11,4,2,8,
+            13,7,0,9,3,4,6,10,2,8,5,14,12,11,15,1,
+            13,6,4,9,8,15,3,0,11,1,2,12,5,10,14,7,
+            1,10,13,0,6,9,8,7,4,15,14,3,11,5,2,12],
+           [7,13,14,3,0,6,9,10,1,2,8,5,11,12,4,15,
+            13,8,11,5,6,15,0,3,4,7,2,12,1,10,14,9,
+            10,6,9,0,12,11,7,13,15,1,3,14,5,2,8,4,
+            3,15,0,6,10,1,13,8,9,4,5,11,12,7,2,14],
+           [2,12,4,1,7,10,11,6,8,5,3,15,13,0,14,9,
+            14,11,2,12,4,7,13,1,5,0,15,10,3,9,8,6,
+            4,2,1,11,10,13,7,8,15,9,12,5,6,3,0,14,
+            11,8,12,7,1,14,2,13,6,15,0,9,10,4,5,3],
+           [12,1,10,15,9,2,6,8,0,13,3,4,14,7,5,11,
+            10,15,4,2,7,12,9,5,6,1,13,14,0,11,3,8,
+            9,14,15,5,2,8,12,3,7,0,4,10,1,13,11,6,
+            4,3,2,12,9,5,15,10,11,14,1,7,6,0,8,13],
+           [4,11,2,14,15,0,8,13,3,12,9,7,5,10,6,1,
+            13,0,11,7,4,9,1,10,14,3,5,12,2,15,8,6,
+            1,4,11,13,12,3,7,14,10,15,6,8,0,5,9,2,
+            6,11,13,8,1,4,10,7,9,5,0,15,14,2,3,12],
+           [13,2,8,4,6,15,11,1,10,9,3,14,5,0,12,7,
+            1,15,13,8,10,3,7,4,12,5,6,11,0,14,9,2,
+            7,11,4,1,9,12,14,2,0,6,10,13,15,3,5,8,
+            2,1,14,7,4,10,8,13,15,12,9,0,3,5,6,11]]
+    s_pos=0
+    for i in range(0,len(source),6):
+        start=source[i]
+        end=source[i+5]
+        row=int(start+end,2)
+        col=int(source[i+1:i+5],2)
+        substituted.append(int2bin(table[s_pos][16*row+col],4))
+        s_pos+=1
+    return "".join(substituted)
+        
+def PC1(source):
+    table=[57,49,41,33,25,17,9,
+           1,58,50,42,34,26,18,
+           10,2,59,51,43,35,27,
+           19,11,3,60,52,44,36,
+           63,55,47,39,31,23,15,
+           7,62,54,46,38,30,22,
+           14,6,61,53,45,37,29,
+           21,13,5,28,20,12,4]
+    return relocate(source,table)
 
-def S0(target):
-    1
-
-def S1(target):
-    1
+def PC2(source):
+    table=[14,17,11,24,1,5,
+           3,28,15,6,21,10,
+           23,19,12,4,26,8,
+           16,7,27,20,13,2,
+           41,52,31,37,47,55,
+           30,40,51,45,33,48,
+           44,49,39,56,34,53,
+           46,42,50,36,29,32]
+    return relocate(source,table)
 
 def XOR(t1,t2):
     ret=""
     for i in range(len(t1)):
         if t1[i]==t2[i]:
-            ret+="1"
-        else:
             ret+="0"
-    
+        else:
+            ret+="1"
+    return ret
+
+def devide2blocks(source):
+    blocks=[]
+    fillNum=0
+    if len(source)%64>0:
+        fillNum=64-len(source)%64
+    for i in range(fillNum): # fill "0" to convert length of text to multiples of 64
+        source+="0"
+    for i in range(0,len(source),64):
+        blocks.append(source[i:i+64])
+    return blocks
+
+def remove0(source):
+    ret=""
+    for i in range(0,len(source),8):
+        if source[i:i+8]!="00000000":
+            ret+=source[i:i+8]
+    return "".join(ret)
+        
 def generateKeys(key):
-    print("key :",key)
-    p10=P10(key)
-    ls1_head=nLeftShift(p10[:5],1)
-    ls1_tail=nLeftShift(p10[5:],1)
-    p8_1=P8(ls1_head+ls1_tail)
-    ls2_head=nLeftShift(ls1_head,2)
-    ls2_tail=nLeftShift(ls1_tail,2)
-    p8_2=P8(ls2_head+ls2_tail)
-    print("k1 :",k1)
-    print("k2 :",k2)
-    return p8_1,p8_2
+    """
+    generate 16 subkeys.
+    return list of keys.
+    """
+    keys=[]
+    pc1=PC1(key) # permuted choice 1
+    c=pc1[:28]
+    d=pc1[28:]
+    for i in range(16): # for 16 rounds
+        if i+1 in [1,2,9,16]: # amount of shift
+            n=1
+        else:
+            n=2
+        c=nLeftShift(c,n) # left shift ot the first half
+        d=nLeftShift(d,n) # left shift ot the second half
+        keys.append(PC2(c+d)) # permuted choice 2
+    return keys
+
+def encrypt(text,subKeys):
+    encryptedBlocks=[]
+    for block in devide2blocks(text):
+        ip=IP(block) # initial permutation
+        l=ip[:32] # the first half
+        r=ip[32:] # the second half
+        for i in range(16): # for 16 rounds
+            e=E(r) # bit-selection
+            xor=XOR(e,subKeys[i])
+            sbox=SBOX(xor) # substitute box
+            p=P(sbox) # permutation
+            xor=XOR(p,l)
+            if i<15: # swap the left and right
+                l=r
+                r=xor 
+        fp=FP(xor+r) # final permutation
+        encryptedBlocks.append(fp)
+    return "".join(encryptedBlocks)
+        
+def decrypt(text,subKeys):
+    decryptedBlocks=[]
+    for block in devide2blocks(text):
+        ip=IP(block) # initial permutation
+        l=ip[:32] # the first half
+        r=ip[32:] # the second half
+        for i in range(16): # for 16 rounds
+            e=E(r) # bit-selection
+            xor=XOR(e,subKeys[-i-1])
+            sbox=SBOX(xor) # substitute box
+            p=P(sbox) # permutation
+            xor=XOR(p,l)
+            if i<15: # swap the left and right
+                l=r
+                r=xor
+        fp=FP(xor+r) # final permutation
+        decryptedBlocks.append(fp)
+    return remove0("".join(decryptedBlocks))
     
-def encryption(text):
-    key="1010000010"
-    k1,k2=generateKeys(key)
-    ip_1=IP(text)
-    ep_1=EP(ip)
-    xor_1_1=XOR(ep,k1)
-    s0_1=S0(xor_epk1[:4])
-    s1_1=S1(xor_epk1[4:])
-    p4_1=P4(s0+s1)
-    xor_1_2=XOR(ip[:4]+p4)
-    ep_2=EP(xor)
-    xor_2_1=XOR(ep,k2)
-    s0_2=S0(xor[:4])
-    s1_2=S1(xor[4:])
-    p4_2=P4(s0+s1)
-    xor_2_2=XOR(ip_1[4:]+p4_2)
-    ip1=IP1(xor_2_2+xor_1_2)
-    return ip1
-    
-def decryption(text):
-    1
+
+def readFile(filename):
+    if os.path.exists(filename):
+        with open(sys.argv[1],"r")as f:
+            return f.read()
+    return ""
+
+def dumpBinary(source):
+    for i,b in enumerate(source):
+        if i%48==0 and i!=0:
+            print()
+        print(b,end="")
+    print()
 
 def main():
-    """
-    授業での例
-    Key:10100 00010
-    k1 :1010 0100
-    k2 :0100 0011
-    plain :1000 0101
-    cipher:0110 0110
-    """
-    plain_text="10000101"
-    cipher_text=encryption(plain_text)
-    decrypted_text=decryption(cipher_text)
+    plaintext="I am a plain text. encrypt me!"
+    key="abcdefgh"
+    if len(str2bin(key))!=64: # key needs to be 64bit
+        print("length of key is wrong")
+        sys.exit()
+    subKeys=generateKeys(str2bin(key))            # generate subkeys
+    encrypted=encrypt(str2bin(plaintext),subKeys) # encrypt
+    decrypted=decrypt(encrypted,subKeys)          # decrypt
 
-    print("plain text     :",plain_text)
-    print("cipher text    :",cipher_text)
-    print("decrypted text :",decrypted_text)
-    
-    if plain_text==decrypted_text:
-        print("succeed!")
-    else:
-        print("failed")
+    # test
+    print("## plain text ######################################")
+    print("## original ##")
+    dumpBinary(bin2str(str2bin(plaintext)))
+    print("## bit string ##")
+    dumpBinary(str2bin(plaintext))
+    print("## encrypted text ##################################")
+    print("## bit string ##")
+    dumpBinary(encrypted)
+    print("## decrypted text ##################################")
+    print("## original ##")
+    dumpBinary(bin2str(decrypted))
+    print("## bit string ##")
+    dumpBinary(decrypted)
     
 if __name__=="__main__":
     main()
