@@ -241,13 +241,6 @@ def decrypt(text,subKeys):
         decryptedBlocks.append(fp)
     return bin2str(remove0("".join(decryptedBlocks)))
     
-
-def readFile(filename):
-    if os.path.exists(filename):
-        with open(sys.argv[1],"r")as f:
-            return f.read()
-    return ""
-
 def dumpBinary(source):
     for i,b in enumerate(source):
         if i%48==0 and i!=0:
