@@ -38,7 +38,10 @@ def nLeftShift(target,n):
     tmp=target[:n]
     return target[n:]+tmp
         
-def relocate(source,table):
+def permutate(source,table):
+    """
+    permutate the bits of the input block following the permutation table
+    """
     return "".join([source[table[i]-1] for i in range(len(table))])
 
 def IP(source):
@@ -50,7 +53,7 @@ def IP(source):
            59,51,43,35,27,19,11,3,
            61,53,45,37,29,21,13,5,
            63,55,47,39,31,23,15,7]
-    return relocate(source,table)
+    return permutate(source,table)
 
 def FP(source):
     table=[40,8,48,16,56,24,64,32,
@@ -61,7 +64,7 @@ def FP(source):
            35,3,43,11,51,19,59,27,
            34,2,42,10,50,18,58,26,
            33,1,41,9,49,17,57,25]
-    return relocate(source,table)
+    return permutate(source,table)
 
 def E(source):
     table=[32,1,2,3,4,5,
@@ -72,7 +75,7 @@ def E(source):
            20,21,22,23,24,25,
            24,25,26,27,28,29,
            28,29,30,31,32,1]
-    return relocate(source,table)
+    return permutate(source,table)
 
 def P(source):
     table=[16,7,20,21,
@@ -83,7 +86,7 @@ def P(source):
            32,27,3,9,
            19,13,30,6,
            22,11,4,25]
-    return relocate(source,table)
+    return permutate(source,table)
 
 def SBOX(source):
     substituted=[]
@@ -138,7 +141,7 @@ def PC1(source):
            7,62,54,46,38,30,22,
            14,6,61,53,45,37,29,
            21,13,5,28,20,12,4]
-    return relocate(source,table)
+    return permutate(source,table)
 
 def PC2(source):
     table=[14,17,11,24,1,5,
@@ -149,7 +152,7 @@ def PC2(source):
            30,40,51,45,33,48,
            44,49,39,56,34,53,
            46,42,50,36,29,32]
-    return relocate(source,table)
+    return permutate(source,table)
 
 def XOR(t1,t2):
     ret=""
@@ -160,7 +163,10 @@ def XOR(t1,t2):
             ret+="1"
     return ret
 
-def devide2blocks(source):
+def divide2blocks(source):
+    """
+    divide the data into blocks (64bit per 1block)
+    """
     blocks=[]
     fillNum=0
     if len(source)%64>0:
@@ -181,59 +187,59 @@ def remove0(source):
 def generateKeys(key):
     """
     generate 16 subkeys.
-    return list of keys.
+    return a list of keys.
     """
     keys=[]
-    pc1=PC1(key) # permuted choice 1
-    c=pc1[:28]
-    d=pc1[28:]
-    for i in range(16): # for 16 rounds
-        if i+1 in [1,2,9,16]: # amount of shift
+    pc1=PC1(key)                     # Permuted choice 1 (PC1)
+    c=pc1[:28]                       # (the first half)
+    d=pc1[28:]                       # (the second half)
+    for i in range(16):              # (for 16 rounds)
+        if i+1 in [1,2,9,16]:        # (amounts of shift)
             n=1
         else:
             n=2
-        c=nLeftShift(c,n) # left shift ot the first half
-        d=nLeftShift(d,n) # left shift ot the second half
-        keys.append(PC2(c+d)) # permuted choice 2
+        c=nLeftShift(c,n)            # (left shift the first half)
+        d=nLeftShift(d,n)            # (left shift the second half)
+        keys.append(PC2(c+d))        # Permuted choice 2 (PC2)
     return keys
 
 def encrypt(text,subKeys):
     encryptedBlocks=[]
-    for block in devide2blocks(text):
-        ip=IP(block) # initial permutation
-        l=ip[:32] # the first half
-        r=ip[32:] # the second half
-        for i in range(16): # for 16 rounds
-            e=E(r) # bit-selection
-            xor=XOR(e,subKeys[i])
-            sbox=SBOX(xor) # substitute box
-            p=P(sbox) # permutation
-            xor=XOR(p,l)
-            if i<15: # swap the left and right
+    for block in divide2blocks(text):
+        ip=IP(block)                 # Initial permutation (IP)
+        l=ip[:32]                    # (the first half)
+        r=ip[32:]                    # (the second half)
+        for i in range(16):          # (for 16 rounds)
+            e=E(r)                   # Expansion function (E)
+            xor=XOR(e,subKeys[i])    # xor
+            sbox=SBOX(xor)           # Substitute boxes (S-BOX)
+            p=P(sbox)                # Permutation (P)
+            xor=XOR(p,l)             # xor
+            if i<15:                 # (swap the left and right)
                 l=r
                 r=xor 
-        fp=FP(xor+r) # final permutation
+        fp=FP(xor+r)                 # Final permutation (IP-1)
         encryptedBlocks.append(fp)
     return "".join(encryptedBlocks)
         
 def decrypt(text,subKeys):
     decryptedBlocks=[]
-    for block in devide2blocks(text):
-        ip=IP(block) # initial permutation
-        l=ip[:32] # the first half
-        r=ip[32:] # the second half
-        for i in range(16): # for 16 rounds
-            e=E(r) # bit-selection
-            xor=XOR(e,subKeys[-i-1])
-            sbox=SBOX(xor) # substitute box
-            p=P(sbox) # permutation
-            xor=XOR(p,l)
-            if i<15: # swap the left and right
+    for block in divide2blocks(text):
+        ip=IP(block)                 # Initial permutation (IP)
+        l=ip[:32]                    # (the first half)
+        r=ip[32:]                    # (the second half)
+        for i in range(16):          # (for 16 rounds)
+            e=E(r)                   # Expansion function (E)
+            xor=XOR(e,subKeys[-i-1]) # xor
+            sbox=SBOX(xor)           # Substitute box (S-BOX)
+            p=P(sbox)                # Permutation (P)
+            xor=XOR(p,l)             # xor
+            if i<15:                 # (swap the left and right)
                 l=r
                 r=xor
-        fp=FP(xor+r) # final permutation
+        fp=FP(xor+r)                 # Final permutation (IP-1)
         decryptedBlocks.append(fp)
-    return remove0("".join(decryptedBlocks))
+    return bin2str(remove0("".join(decryptedBlocks)))
     
 
 def readFile(filename):
@@ -250,29 +256,35 @@ def dumpBinary(source):
     print()
 
 def main():
-    plaintext="I am a plain text. encrypt me!"
+    plaintext="I am a plain text, encrypt me!"
     key="abcdefgh"
-    if len(str2bin(key))!=64: # key needs to be 64bit
+    if len(str2bin(key))!=64:                     # key needs to be 64bit
         print("length of key is wrong")
         sys.exit()
     subKeys=generateKeys(str2bin(key))            # generate subkeys
-    encrypted=encrypt(str2bin(plaintext),subKeys) # encrypt
-    decrypted=decrypt(encrypted,subKeys)          # decrypt
+    encrypted=encrypt(str2bin(plaintext),subKeys) # encryption
+    decrypted=decrypt(encrypted,subKeys)          # decryption
 
-    # test
     print("## plain text ######################################")
-    print("## original ##")
-    dumpBinary(bin2str(str2bin(plaintext)))
-    print("## bit string ##")
+    print("-- text --")
+    dumpBinary(plaintext)
+    print("-- bit string --")
     dumpBinary(str2bin(plaintext))
+    print()
     print("## encrypted text ##################################")
-    print("## bit string ##")
+    print("-- bit string --")
     dumpBinary(encrypted)
+    print()
     print("## decrypted text ##################################")
-    print("## original ##")
-    dumpBinary(bin2str(decrypted))
-    print("## bit string ##")
+    print("-- text --")
     dumpBinary(decrypted)
-    
+    print("-- bit string --")
+    dumpBinary(str2bin(decrypted))
+    print()
+    if(plaintext==decrypted):
+        print("encryption succeed")
+    else:
+        print("encryption failed")
+        
 if __name__=="__main__":
     main()
